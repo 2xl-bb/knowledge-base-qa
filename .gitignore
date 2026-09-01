@@ -1,0 +1,13 @@
+# 密钥文件——绝不能上传到 GitHub
+key.txt
+key_sf.txt
+
+# 生成的知识库文件（用 build_kb.py 重新生成）
+kb.json
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 虚拟环境
+.venv/
