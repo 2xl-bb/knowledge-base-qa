@@ -85,17 +85,25 @@ def call_llm(system: str, user: str) -> str:
     return data["choices"][0]["message"]["content"]
 
 
-def embed_many(texts: list) -> list:
-    """把多段文字一次性变成向量（硅基流动 BAAI/bge-m3），返回顺序与传入一致"""
-    data = _post(
-        SF_URL_EMBED,
-        {
-            "model": "BAAI/bge-m3",  # 免费向量模型，1024 维
-            "input": texts,
-        },
-        SF_API_KEY,
-    )
-    return [item["embedding"] for item in sorted(data["data"], key=lambda x: x["index"])]
+def embed_many(texts: list, batch_size: int = 64) -> list:
+    """把多段文字变成向量（硅基流动 BAAI/bge-m3），返回顺序与传入一致。
+
+    接口单次请求能接收的文本条数有限制，段数多了就分几批发，
+    每批最多 batch_size 条（64 是常见的稳妥上限）。"""
+    results = []
+    for start in range(0, len(texts), batch_size):
+        batch = texts[start : start + batch_size]
+        data = _post(
+            SF_URL_EMBED,
+            {
+                "model": "BAAI/bge-m3",  # 免费向量模型，1024 维
+                "input": batch,
+            },
+            SF_API_KEY,
+        )
+        for item in sorted(data["data"], key=lambda x: x["index"]):
+            results.append(item["embedding"])
+    return results
 
 
 def embed(text: str) -> list:

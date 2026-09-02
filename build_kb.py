@@ -103,7 +103,7 @@ def main():
             sources.append(f"{name}（第{i + 1}段）")
         print(f"  {name}: {len(parts)} 段")
 
-    print(f"共 {len(chunks)} 段，开始调用 API 计算向量（一次请求打包全部）……")
+    print(f"共 {len(chunks)} 段，开始调用 API 计算向量（自动分批，段数多时请耐心等待）……")
     vectors = common.embed_many(chunks)
 
     with open("kb.json", "w", encoding="utf-8") as f:
