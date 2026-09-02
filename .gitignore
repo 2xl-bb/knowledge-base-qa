@@ -5,6 +5,9 @@ key_sf.txt
 # 生成的知识库文件（用 build_kb.py 重新生成）
 kb.json
 
+# 课件/书籍 PDF（大文件且多为有版权资料，留在本地即可）
+notes/*.pdf
+
 # Python 缓存
 __pycache__/
 *.pyc
