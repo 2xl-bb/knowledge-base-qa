@@ -3,8 +3,8 @@
 运行：
     python build_kb.py
 
-流程：读取 notes/ 下的 .txt 和 .md 文件 -> 切成长短合适的块 ->
-每块用 API 算成向量 -> 存进 kb.json。
+流程：读取 notes/ 下的 .txt、.md 和 .pdf（有文字层的）文件 ->
+切成长短合适的块 -> 每块用 API 算成向量 -> 存进 kb.json。
 以后笔记更新了，重新运行一次即可。
 """
 import json
@@ -25,14 +25,42 @@ def read_text(path: str) -> str:
     return ""
 
 
+def extract_pdf_pages(path: str) -> list:
+    """提取 PDF 每页的文字，返回 [(页码, 该页文字)]。
+    只支持有文字层的 PDF（课件/论文这类数字导出的）；扫描件没有文字层，返回空列表。"""
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        print("缺少 pypdf 库，无法读 PDF：先运行  python -m pip install pypdf")
+        raise SystemExit(1)
+    reader = PdfReader(path)
+    pages = []
+    for i, page in enumerate(reader.pages, start=1):
+        text = (page.extract_text() or "").strip()
+        if text:
+            pages.append((i, text))
+    return pages
+
+
 def load_notes(folder="notes"):
-    """读取文件夹里所有 .txt 和 .md 文件，返回 [(文件名, 全文)]"""
+    """读取 notes/ 下的笔记文件。
+    - .txt / .md：整个文件作为一个来源
+    - .pdf：逐页提取，每页作为一个来源（来源名带页码，方便追溯回答出自哪页）
+    返回 [(来源名, 文本)]。"""
     notes = []
     for name in sorted(os.listdir(folder)):
+        path = os.path.join(folder, name)
         if name.endswith((".txt", ".md")):
-            text = read_text(os.path.join(folder, name))
+            text = read_text(path)
             if text.strip():
                 notes.append((name, text))
+        elif name.lower().endswith(".pdf"):
+            pages = extract_pdf_pages(path)
+            if not pages:
+                print(f"  ! 跳过 {name}：提取不到文字，可能是扫描件（需要 OCR）")
+                continue
+            for pageno, page_text in pages:
+                notes.append((f"{name} 第{pageno}页", page_text))
     return notes
 
 
@@ -62,10 +90,10 @@ def main():
     notes = load_notes()
     if not notes:
         print("notes 文件夹里还没有文件！")
-        print("把 .txt 或 .md 格式的课程笔记放进去，再运行本脚本。")
+        print("把 .txt / .md 课程笔记，或有文字层的 .pdf 课件放进去，再运行本脚本。")
         return
 
-    print(f"找到 {len(notes)} 个文件，开始切块……")
+    print(f"共 {len(notes)} 个来源（文件/页面），开始切块……")
     chunks = []
     sources = []
     for name, text in notes:
