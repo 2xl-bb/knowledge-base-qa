@@ -1,0 +1,7 @@
+# 强制以正式模式运行：本项目目录里的 streamlit 安装被误判为开发模式，
+# 导致网页打不开（只返回 Not Found）。developmentMode=false 后由 streamlit 自己提供网页界面。
+[global]
+developmentMode = false
+
+[server]
+port = 8501
